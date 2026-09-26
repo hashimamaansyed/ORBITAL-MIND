@@ -1,11 +1,14 @@
-<div align="center">
+ORBITAL MIND transforms traditional Personal Knowledge Management (PKM) into an immersive 3D celestial ecosystem. Built with an obsidian deep-space backdrop (#030508), crisp white UI controls, electric purple accent vectors, and Astral geometric typography, it replaces cluttered web-graph links with structured planetary orbits revolving around a dynamic central engine.
 
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+✨ Features
+🌌 Dynamic Neural Core Shader: Powered by custom GLSL shaders that calculate category ratios in real time (Notes, Diary, Goals, Books) and blend them into a pulsing thought-ratio gradient.
 
-  <h1>Built with AI Studio</h2>
+🪐 Tag-Shell Orbital Rings: Organizes markdown nodes along designated tag tracks without visual line clutter.
 
-  <p>The fastest path from prompt to production with Gemini.</p>
+🧠 Semantic Gravity Physics: Calculates vector distances in real time to pull semantically related thoughts into close orbital proximity on their shared plane.
 
-  <a href="https://aistudio.google.com/apps">Start building</a>
+🚀 Staged Cinematic Touchdown: Selecting a planet freezes orbital motion, centers the viewport camera, and docks a 3D mini-rocket lander onto the surface alongside a compact detail preview card.
 
-</div>
+🎛️ Draggable Cosmic HUD: Floating control deck to adjust orbital speed, bloom intensity, and core gradient ratios on the fly.
+
+🛡️ High-Performance Architecture: Built with global rejection handling and custom Vite HMR socket boundaries to ensure a smooth 60 FPS canvas.
