@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Remix Mind Map</title>
+    <meta name="description" content="Alien solar system 3D mind map and associative knowledge vault featuring celestial planetary nodes, glowing orbital paths, flowing synaptic sparks, and an Astral sci-fi UI overlay." />
+    <meta property="og:title" content="Remix Mind Map" />
+    <meta property="og:description" content="Alien solar system 3D mind map and associative knowledge vault featuring celestial planetary nodes, glowing orbital paths, flowing synaptic sparks, and an Astral sci-fi UI overlay." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&family=Syncopate:wght@400;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+    <script>
+      // Graceful Vite HMR WebSocket Handling
+      // Suppress Vite WebSocket disconnect warnings in iframe container
+      (function() {
+        window.addEventListener('unhandledrejection', function(event) {
+          var reason = event.reason;
+          var msg = (reason && (reason.message || String(reason))) || '';
+          if (
+            msg.indexOf('WebSocket') !== -1 ||
+            msg.indexOf('websocket') !== -1 ||
+            msg.indexOf('closed without opened') !== -1 ||
+            msg.indexOf('failed to connect') !== -1
+          ) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+        });
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

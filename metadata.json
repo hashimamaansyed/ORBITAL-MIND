@@ -1,0 +1,8 @@
+{
+  "name": "Remix Mind Map",
+  "description": "Alien solar system 3D mind map and associative knowledge vault featuring celestial planetary nodes, glowing orbital paths, flowing synaptic sparks, and an Astral sci-fi UI overlay.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

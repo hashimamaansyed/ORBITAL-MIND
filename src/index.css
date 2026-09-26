@@ -1,0 +1,357 @@
+@import "tailwindcss";
+
+:root {
+  /* 60% Bright Clean White (#FFFFFF) */
+  --astral-white: #ffffff;
+  --astral-white-card: #ffffff;
+  --astral-white-subtle: rgba(255, 255, 255, 0.95);
+
+  /* 30% Deep Electric Purple (#6D28D9 / #7C3AED) */
+  --astral-purple: #7c3aed;
+  --astral-purple-deep: #6d28d9;
+  --astral-purple-light: #a855f7;
+  --astral-purple-border: rgba(124, 58, 237, 0.55);
+  --astral-purple-glow: rgba(124, 58, 237, 0.35);
+
+  /* 20% Obsidian Black (#090A0F / #000000) */
+  --astral-black: #090a0f;
+  --astral-black-pure: #000000;
+  --astral-shadow: rgba(0, 0, 0, 0.82);
+
+  /* Space Canvas Void (#030508) */
+  --void-deep: #030508;
+  --void-canvas: #030508;
+}
+
+/* ==========================================================================
+   The Astral Typography (Geometric Ultra-Thin Futuristic Font Styling)
+   ========================================================================== */
+.font-astral {
+  font-family: 'Syncopate', 'Orbitron', sans-serif !important;
+  letter-spacing: 0.18em !important;
+  text-transform: uppercase !important;
+}
+
+.font-astral-title {
+  font-family: 'Syncopate', 'Orbitron', sans-serif !important;
+  letter-spacing: 0.22em !important;
+  text-transform: uppercase !important;
+  font-weight: 700;
+}
+
+.font-astral-btn {
+  font-family: 'Syncopate', 'Orbitron', sans-serif !important;
+  letter-spacing: 0.18em !important;
+  text-transform: uppercase !important;
+  font-weight: 600;
+}
+
+.font-astral-sub {
+  font-family: 'Orbitron', 'Syncopate', sans-serif !important;
+  letter-spacing: 0.15em !important;
+  text-transform: uppercase !important;
+}
+
+/* ==========================================================================
+   60% White / 30% Deep Purple / 20% Obsidian Black UI Panels
+   ========================================================================== */
+.astral-card-white {
+  background: #ffffff !important;
+  color: #090a0f !important;
+  border: 1.5px solid #7c3aed !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.82), 0 0 16px rgba(124, 58, 237, 0.28) !important;
+}
+
+.astral-header-bar {
+  background: #ffffff !important;
+  border-bottom: 2px solid #7c3aed !important;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.8) !important;
+}
+
+.astral-tab-container {
+  background: #090a0f;
+  border: 1px solid #7c3aed;
+  box-shadow: 0 0 12px rgba(124, 58, 237, 0.25);
+}
+
+.astral-btn-primary {
+  background: #ffffff !important;
+  color: #090a0f !important;
+  border: 1.5px solid #7c3aed !important;
+  font-family: 'Syncopate', 'Orbitron', sans-serif !important;
+  letter-spacing: 0.18em !important;
+  text-transform: uppercase !important;
+  font-weight: 700 !important;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-shadow: 0 0 14px rgba(124, 58, 237, 0.3) !important;
+}
+
+.astral-btn-primary:hover {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 22px rgba(124, 58, 237, 0.7) !important;
+}
+
+.astral-btn-purple {
+  background: #7c3aed !important;
+  color: #ffffff !important;
+  border: 1px solid #6d28d9 !important;
+  font-family: 'Syncopate', 'Orbitron', sans-serif !important;
+  letter-spacing: 0.18em !important;
+  text-transform: uppercase !important;
+  font-weight: 600 !important;
+  box-shadow: 0 0 16px rgba(124, 58, 237, 0.45) !important;
+}
+
+.astral-btn-purple:hover {
+  background: #6d28d9 !important;
+  box-shadow: 0 0 24px rgba(109, 40, 217, 0.65) !important;
+}
+
+/* Custom Styled Astral Purple Range Slider */
+.astral-slider-purple {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: #e2e8f0;
+  border-radius: 9999px;
+  outline: none;
+  border: 1px solid #cbd5e1;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.astral-slider-purple:hover,
+.astral-slider-purple:focus {
+  border-color: #7c3aed;
+  box-shadow: 0 0 10px rgba(124, 58, 237, 0.3);
+}
+
+.astral-slider-purple::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #7c3aed;
+  border: 2.5px solid #ffffff;
+  cursor: pointer;
+  box-shadow: 0 0 12px #7c3aed, 0 0 20px rgba(124, 58, 237, 0.6);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.astral-slider-purple::-webkit-slider-thumb:hover,
+.astral-slider-purple:active::-webkit-slider-thumb {
+  transform: scale(1.25);
+  box-shadow: 0 0 18px #6d28d9, 0 0 28px rgba(109, 40, 217, 0.85);
+}
+
+.astral-slider-purple::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #7c3aed;
+  border: 2.5px solid #ffffff;
+  cursor: pointer;
+  box-shadow: 0 0 12px #7c3aed, 0 0 20px rgba(124, 58, 237, 0.6);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.astral-slider-purple::-moz-range-thumb:hover {
+  transform: scale(1.25);
+  box-shadow: 0 0 18px #6d28d9, 0 0 28px rgba(109, 40, 217, 0.85);
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: var(--void-deep);
+  color: #f1f5f9;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Cyber Dark Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--void-deep);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--graphite-border);
+  border-radius: 9999px;
+  border: 1px solid rgba(19, 23, 34, 0.5);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-steel);
+}
+
+/* Cyber Glassmorphism & Panel Utilities (30% Dark Kinetic Graphite UI Structure) */
+.cyber-panel {
+  background: rgba(15, 20, 32, 0.75) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid #1e2638;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+}
+
+.cyber-panel-graphite {
+  background: rgba(15, 20, 32, 0.75) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid #1e2638;
+}
+
+.cyber-card {
+  background: rgba(15, 20, 32, 0.75);
+  border: 1px solid #1e2638;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cyber-card:hover {
+  border-color: #22d3ee;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5), 0 0 12px rgba(34, 211, 238, 0.2);
+}
+
+/* Dynamic Box-Shadow Neon Glow Utilities */
+.glow-box-violet {
+  box-shadow: 0 0 24px rgba(147, 51, 234, 0.42), 0 0 6px rgba(192, 132, 252, 0.65);
+}
+.glow-box-amber {
+  box-shadow: 0 0 24px rgba(217, 119, 6, 0.42), 0 0 6px rgba(251, 191, 36, 0.65);
+}
+.glow-box-cyan {
+  box-shadow: 0 0 24px rgba(8, 145, 178, 0.42), 0 0 6px rgba(34, 211, 238, 0.65);
+}
+.glow-box-white {
+  box-shadow: 0 0 28px rgba(255, 255, 255, 0.6), 0 0 8px rgba(34, 211, 238, 0.7);
+}
+
+/* ==========================================================================
+   Modern Glassmorphism & Neon Border Trails (Electric Violet & Vibrant Cyan)
+   ========================================================================== */
+.frosted-glass-panel {
+  background: rgba(15, 20, 32, 0.75) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid #1e2638;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.65);
+}
+
+.neon-border-trail {
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.neon-border-trail:hover,
+.neon-border-trail:focus-within {
+  border-color: #22d3ee !important;
+  box-shadow: 
+    0 0 18px rgba(34, 211, 238, 0.35),
+    0 0 30px rgba(192, 132, 252, 0.25),
+    inset 0 0 10px rgba(34, 211, 238, 0.08);
+}
+
+/* Tab bar frosted glass with neon border trail */
+.frosted-tab-container {
+  background: rgba(15, 20, 32, 0.75) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid #1e2638;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.frosted-tab-container:hover,
+.frosted-tab-container:focus-within {
+  border-color: #22d3ee;
+  box-shadow:
+    0 0 16px rgba(34, 211, 238, 0.3),
+    0 0 26px rgba(192, 132, 252, 0.2);
+}
+
+/* Custom Styled Range Slider Thumb with Inner Glow for Synaptic Proximity */
+.synaptic-proximity-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: #0b0e14;
+  border-radius: 9999px;
+  outline: none;
+  border: 1px solid #1e2638;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.synaptic-proximity-slider:hover,
+.synaptic-proximity-slider:focus {
+  border-color: #22d3ee;
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.3);
+}
+
+.synaptic-proximity-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #22d3ee;
+  border: 2px solid #ffffff;
+  cursor: pointer;
+  box-shadow: 0 0 12px #22d3ee, 0 0 24px rgba(34, 211, 238, 0.6), inset 0 0 6px #ffffff;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.synaptic-proximity-slider::-webkit-slider-thumb:hover,
+.synaptic-proximity-slider:active::-webkit-slider-thumb {
+  transform: scale(1.25);
+  box-shadow: 0 0 18px #22d3ee, 0 0 34px rgba(34, 211, 238, 0.85), inset 0 0 8px #ffffff;
+}
+
+.synaptic-proximity-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #22d3ee;
+  border: 2px solid #ffffff;
+  cursor: pointer;
+  box-shadow: 0 0 12px #22d3ee, 0 0 24px rgba(34, 211, 238, 0.6), inset 0 0 6px #ffffff;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.synaptic-proximity-slider::-moz-range-thumb:hover {
+  transform: scale(1.25);
+  box-shadow: 0 0 18px #22d3ee, 0 0 34px rgba(34, 211, 238, 0.85), inset 0 0 8px #ffffff;
+}
+
+/* Dynamic Filter Drop-Shadow Neon Glow Utilities */
+.drop-glow-violet {
+  filter: drop-shadow(0 0 6px #9333ea) drop-shadow(0 0 14px rgba(192, 132, 252, 0.5));
+}
+.drop-glow-amber {
+  filter: drop-shadow(0 0 6px #d97706) drop-shadow(0 0 14px rgba(251, 191, 36, 0.5));
+}
+.drop-glow-cyan {
+  filter: drop-shadow(0 0 6px #0891b2) drop-shadow(0 0 14px rgba(34, 211, 238, 0.5));
+}
+.drop-glow-white {
+  filter: drop-shadow(0 0 8px #ffffff) drop-shadow(0 0 18px rgba(34, 211, 238, 0.6));
+}
+
+/* Text Glow Utilities */
+.glow-text-violet {
+  text-shadow: 0 0 12px rgba(192, 132, 252, 0.75);
+}
+.glow-text-amber {
+  text-shadow: 0 0 12px rgba(251, 191, 36, 0.75);
+}
+.glow-text-cyan {
+  text-shadow: 0 0 12px rgba(34, 211, 238, 0.75);
+}
+
