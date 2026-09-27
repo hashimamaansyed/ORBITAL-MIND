@@ -227,7 +227,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                   <div className="flex justify-between">
                     <span>Account:</span>
                     <span className="font-bold truncate max-w-[130px] text-[#090a0f]">
-                      {firebaseUser?.email || (firebaseUser?.isAnonymous ? 'Guest (Synced)' : 'Anonymous Session')}
+                      {firebaseUser?.email || (firebaseUser?.isAnonymous ? 'Guest User' : 'Local Vault')}
                     </span>
                   </div>
                 </div>

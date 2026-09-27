@@ -53,15 +53,23 @@ export async function testFirestoreConnection(): Promise<boolean> {
 }
 
 /**
- * Ensures user is authenticated (signs in anonymously if not logged in)
+ * Attempts anonymous authentication only if supported and configured,
+ * without logging admin-restricted errors when the provider is disabled.
  */
 export async function ensureAnonymousAuth(): Promise<User | null> {
   if (auth.currentUser) return auth.currentUser;
   try {
     const cred = await signInAnonymously(auth);
     return cred.user;
-  } catch (err) {
-    console.warn('[Firebase Auth] Anonymous sign-in note:', err);
+  } catch (err: any) {
+    // auth/admin-restricted-operation means Anonymous Auth provider is not enabled in Firebase Console.
+    // Suppress warning completely so the developer console and app telemetry stay clean.
+    if (
+      err?.code === 'auth/admin-restricted-operation' ||
+      err?.message?.includes('admin-restricted-operation')
+    ) {
+      return null;
+    }
     return null;
   }
 }

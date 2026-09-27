@@ -79,8 +79,6 @@ export default function App() {
       setCurrentUser(user);
     });
 
-    ensureAnonymousAuth().catch(console.warn);
-
     return () => unsubscribe();
   }, []);
 
@@ -179,8 +177,13 @@ export default function App() {
   const handleSyncAllToFirebase = async () => {
     let uid = auth.currentUser?.uid || currentUser?.uid;
     if (!uid) {
-      const user = await ensureAnonymousAuth();
-      uid = user?.uid;
+      try {
+        const cred = await signInWithPopup(auth, googleProvider);
+        uid = cred.user.uid;
+      } catch (err: any) {
+        console.warn('Sign in needed for cloud backup:', err?.message);
+        return;
+      }
     }
     if (!uid) return;
 
@@ -209,7 +212,6 @@ export default function App() {
   const handleSignOutFirebase = async () => {
     try {
       await signOut(auth);
-      await ensureAnonymousAuth();
     } catch (err) {
       console.warn('Sign out:', err);
     }
