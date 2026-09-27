@@ -10,7 +10,11 @@ import {
   Sparkles,
   ExternalLink,
   Layers,
-  ChevronDown
+  ChevronDown,
+  Cloud,
+  LogIn,
+  LogOut,
+  RefreshCw,
 } from 'lucide-react';
 
 interface TopBarProps {
@@ -18,12 +22,18 @@ interface TopBarProps {
   onSelectTab: (tab: WorkspaceTab) => void;
   onOpenSearch: () => void;
   onOpenQuickNew: () => void;
+  onOpenSpark?: () => void;
   thoughts: ThoughtNode[];
   vaultPath: string;
   isDiskSynced: boolean;
   onExportZip: () => void;
   onConnectLocalDirectory: () => void;
   connectedLocalVaultName?: string | null;
+  firebaseUser?: any;
+  isFirebaseSyncing?: boolean;
+  onSyncAllToFirebase?: () => void;
+  onSignInGoogle?: () => void;
+  onSignOutFirebase?: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -31,12 +41,18 @@ export const TopBar: React.FC<TopBarProps> = ({
   onSelectTab,
   onOpenSearch,
   onOpenQuickNew,
+  onOpenSpark,
   thoughts,
   vaultPath,
   isDiskSynced,
   onExportZip,
   onConnectLocalDirectory,
-  connectedLocalVaultName
+  connectedLocalVaultName,
+  firebaseUser,
+  isFirebaseSyncing,
+  onSyncAllToFirebase,
+  onSignInGoogle,
+  onSignOutFirebase
 }) => {
   const [showVaultMenu, setShowVaultMenu] = useState(false);
 
@@ -71,27 +87,27 @@ export const TopBar: React.FC<TopBarProps> = ({
           <button
             id="tab-universe-btn"
             onClick={() => onSelectTab('universe')}
-            className={`px-3 py-1.5 text-xs font-astral font-bold rounded-lg transition-all flex items-center gap-2 ${
+            className={`px-3 py-1.5 text-xs font-astral font-bold rounded-lg transition-all flex items-center gap-1.5 ${
               currentTab === 'universe'
                 ? 'bg-[#7c3aed] text-white shadow-md border border-[#a855f7] shadow-[0_0_14px_rgba(124,58,237,0.65)]'
                 : 'text-white/80 hover:text-white hover:bg-white/10'
             }`}
           >
-            <span className="text-sm leading-none">🪐</span>
-            <span className="hidden sm:inline">SOLAR SYSTEM</span>
+            <span className="text-sm leading-none">🌌</span>
+            <span className="hidden sm:inline">3D UNIVERSE</span>
           </button>
 
           <button
             id="tab-writing-btn"
             onClick={() => onSelectTab('writing')}
-            className={`px-3 py-1.5 text-xs font-astral font-bold rounded-lg transition-all flex items-center gap-2 ${
+            className={`px-3 py-1.5 text-xs font-astral font-bold rounded-lg transition-all flex items-center gap-1.5 ${
               currentTab === 'writing'
                 ? 'bg-[#7c3aed] text-white shadow-md border border-[#a855f7] shadow-[0_0_14px_rgba(124,58,237,0.65)]'
                 : 'text-white/80 hover:text-white hover:bg-white/10'
             }`}
           >
-            <span className="w-2 h-2 rounded-full bg-[#c084fc] shadow-sm shadow-[#9333ea]" />
-            <span className="hidden sm:inline">NOTES</span>
+            <span className="text-sm leading-none">✍️</span>
+            <span className="hidden sm:inline">WRITING & NOTES</span>
             <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black text-[#e9d5ff] font-mono hidden md:inline border border-[#7c3aed]/40">
               {notesCount}
             </span>
@@ -100,14 +116,14 @@ export const TopBar: React.FC<TopBarProps> = ({
           <button
             id="tab-diary-btn"
             onClick={() => onSelectTab('diary')}
-            className={`px-3 py-1.5 text-xs font-astral font-bold rounded-lg transition-all flex items-center gap-2 ${
+            className={`px-3 py-1.5 text-xs font-astral font-bold rounded-lg transition-all flex items-center gap-1.5 ${
               currentTab === 'diary'
                 ? 'bg-[#7c3aed] text-white shadow-md border border-[#a855f7] shadow-[0_0_14px_rgba(124,58,237,0.65)]'
                 : 'text-white/80 hover:text-white hover:bg-white/10'
             }`}
           >
-            <span className="w-2 h-2 rounded-full bg-[#fbbf24] shadow-sm shadow-[#d97706]" />
-            <span className="hidden sm:inline">DIARY</span>
+            <span className="text-sm leading-none">📅</span>
+            <span className="hidden sm:inline">DIARY / DAILY LOG</span>
             <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black text-[#fef3c7] font-mono hidden md:inline border border-[#7c3aed]/40">
               {diaryCount}
             </span>
@@ -116,14 +132,14 @@ export const TopBar: React.FC<TopBarProps> = ({
           <button
             id="tab-goals-btn"
             onClick={() => onSelectTab('goals')}
-            className={`px-3 py-1.5 text-xs font-astral font-bold rounded-lg transition-all flex items-center gap-2 ${
+            className={`px-3 py-1.5 text-xs font-astral font-bold rounded-lg transition-all flex items-center gap-1.5 ${
               currentTab === 'goals'
                 ? 'bg-[#7c3aed] text-white shadow-md border border-[#a855f7] shadow-[0_0_14px_rgba(124,58,237,0.65)]'
                 : 'text-white/80 hover:text-white hover:bg-white/10'
             }`}
           >
-            <span className="w-2 h-2 rounded-full bg-[#22d3ee] shadow-sm shadow-[#0891b2]" />
-            <span className="hidden sm:inline">GOALS</span>
+            <span className="text-sm leading-none">🎯</span>
+            <span className="hidden sm:inline">GOALS BOARD</span>
             <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black text-[#cffafe] font-mono hidden md:inline border border-[#7c3aed]/40">
               {goalsCount}
             </span>
@@ -195,6 +211,66 @@ export const TopBar: React.FC<TopBarProps> = ({
                 </div>
               </div>
 
+              {/* Firebase Cloud Section */}
+              <div className="pt-3 mb-3 border-t border-gray-200">
+                <div className="flex items-center justify-between pb-1.5 mb-2">
+                  <div className="flex items-center gap-1.5 font-bold font-astral text-[#090a0f] text-[11px]">
+                    <Cloud className="w-4 h-4 text-[#7c3aed]" />
+                    <span>FIREBASE CLOUD</span>
+                  </div>
+                  <span className="px-2 py-0.5 text-[9px] font-mono font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+                    CONNECTED
+                  </span>
+                </div>
+
+                <div className="text-[10px] text-[#090a0f]/80 space-y-1 mb-2 font-mono">
+                  <div className="flex justify-between">
+                    <span>Account:</span>
+                    <span className="font-bold truncate max-w-[130px] text-[#090a0f]">
+                      {firebaseUser?.email || (firebaseUser?.isAnonymous ? 'Guest (Synced)' : 'Anonymous Session')}
+                    </span>
+                  </div>
+                </div>
+
+                {onSyncAllToFirebase && (
+                  <button
+                    type="button"
+                    disabled={isFirebaseSyncing}
+                    onClick={() => {
+                      onSyncAllToFirebase();
+                    }}
+                    className="w-full py-1.5 px-2.5 rounded-lg bg-[#7c3aed]/10 hover:bg-[#7c3aed]/20 text-[#7c3aed] border border-[#7c3aed]/40 flex items-center justify-center gap-1.5 transition-all font-astral font-bold text-[10px] tracking-wider mb-2 cursor-pointer disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-3 h-3 ${isFirebaseSyncing ? 'animate-spin' : ''}`} />
+                    <span>{isFirebaseSyncing ? 'SYNCING TO CLOUD...' : 'BACKUP TO FIRESTORE'}</span>
+                  </button>
+                )}
+
+                {firebaseUser && !firebaseUser.isAnonymous ? (
+                  onSignOutFirebase && (
+                    <button
+                      type="button"
+                      onClick={onSignOutFirebase}
+                      className="w-full py-1 px-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-[#090a0f] flex items-center justify-center gap-1 text-[10px] font-astral border border-gray-300"
+                    >
+                      <LogOut className="w-3 h-3 text-red-500" />
+                      <span>SIGN OUT</span>
+                    </button>
+                  )
+                ) : (
+                  onSignInGoogle && (
+                    <button
+                      type="button"
+                      onClick={onSignInGoogle}
+                      className="w-full py-1 px-2 rounded-lg bg-white hover:bg-gray-50 text-[#090a0f] flex items-center justify-center gap-1.5 text-[10px] font-astral border border-gray-300 shadow-sm"
+                    >
+                      <LogIn className="w-3 h-3 text-[#7c3aed]" />
+                      <span>SIGN IN WITH GOOGLE</span>
+                    </button>
+                  )
+                )}
+              </div>
+
               <div className="space-y-2 pt-2 border-t border-gray-200">
                 <button
                   onClick={() => {
@@ -222,14 +298,33 @@ export const TopBar: React.FC<TopBarProps> = ({
           )}
         </div>
 
-        {/* Quick New Thought Button (Astral Clean White with Deep Purple Border) */}
+        {/* Spark Gemini AI Button */}
+        {onOpenSpark && (
+          <button
+            id="spark-gemini-btn"
+            data-testid="spark-gemini-btn"
+            onClick={onOpenSpark}
+            aria-label="Spark with Gemini"
+            title="Spark thoughts and mind map branches with Gemini AI"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#090a0f] hover:bg-[#181c2e] text-[#e9d5ff] hover:text-white font-astral font-bold text-xs tracking-[0.16em] transition-all shadow-[0_0_15px_rgba(124,58,237,0.35)] hover:shadow-[0_0_22px_rgba(124,58,237,0.65)] active:scale-95 border border-[#a855f7] cursor-pointer"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-[#c084fc] animate-pulse" />
+            <span className="hidden md:inline">SPARK</span>
+          </button>
+        )}
+
+        {/* New Node Modal Button (Astral High-Contrast Electric Purple) */}
         <button
-          id="quick-note-btn"
+          id="new-node-btn"
+          data-testid="new-node-btn"
           onClick={onOpenQuickNew}
-          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-astral font-bold text-xs tracking-[0.18em] transition-all shadow-[0_0_18px_rgba(124,58,237,0.5)] hover:shadow-[0_0_26px_rgba(124,58,237,0.8)] active:scale-95 border border-[#a855f7]"
+          aria-label="New Node"
+          title="Spawn New Planetary Node"
+          className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-astral font-bold text-xs tracking-[0.18em] transition-all shadow-[0_0_18px_rgba(124,58,237,0.5)] hover:shadow-[0_0_26px_rgba(124,58,237,0.8)] active:scale-95 border border-[#a855f7] cursor-pointer"
         >
           <Plus className="w-4 h-4 text-white stroke-[2.5]" />
-          <span className="hidden sm:inline">NEW NODE</span>
+          <span className="hidden sm:inline">+ NEW NODE</span>
+          <span className="sm:hidden font-astral text-[10px]">NEW</span>
         </button>
       </div>
     </header>

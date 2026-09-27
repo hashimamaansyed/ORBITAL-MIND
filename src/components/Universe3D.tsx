@@ -7,8 +7,9 @@ import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPa
 import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
 import { SpotlightBeacon } from '../services/spotlightBeacon';
 import { PlanetaryRocket } from '../services/planetaryRocket';
+import { ParticleTrailsSystem } from '../services/particleTrails';
 import { ThoughtNode, ThoughtType } from '../types';
-import { layoutNodesIn3D, cosineSimilarity, generateLocalEmbedding } from '../services/embedding';
+import { layoutNodesIn3D, cosineSimilarity, generateLocalEmbedding, getPrimaryTopic, calculateEdges } from '../services/embedding';
 import { getPlanetTexture } from '../services/planetTextures';
 import {
   PALETTE,
@@ -108,6 +109,10 @@ export const Universe3D: React.FC<Universe3DProps> = ({
   const [orbitSpeedFactor, setOrbitSpeedFactor] = useState<number>(1.0);
   const orbitSpeedFactorRef = useRef<number>(1.0);
   orbitSpeedFactorRef.current = orbitSpeedFactor;
+
+  // Real-time Similarity Sensitivity (0.30 - 0.90) to filter connection density
+  const [similarityThreshold, setSimilarityThreshold] = useState<number>(0.55);
+  const particleTrailsRef = useRef<ParticleTrailsSystem | null>(null);
 
   // Rocket Landing Sequence & Modal Viewport States
   const [isRocketLanding, setIsRocketLanding] = useState<boolean>(false);
@@ -228,21 +233,38 @@ export const Universe3D: React.FC<Universe3DProps> = ({
     targetNodeId?: string;
   } | null>(null);
 
-  // Dynamic Thought-Gradient Ratios across vault categories
+  // Dynamic Thought-Gradient Ratios across vault categories and semantic clusters
   const categoryRatios = useMemo(() => {
     if (!thoughts || thoughts.length === 0) {
-      return { notes: 0.4, diary: 0.3, goals: 0.2, textbook: 0.1, total: 0 };
+      return {
+        notes: 0.4, diary: 0.3, goals: 0.2, textbook: 0.1,
+        physics: 0.33, philosophy: 0.33, code: 0.34, aux: 0.0,
+        total: 0,
+        notesCount: 0, diaryCount: 0, goalsCount: 0, textbookCount: 0,
+        physicsCount: 0, philosophyCount: 0, codeCount: 0, auxCount: 0,
+      };
     }
     let notesCount = 0;
     let diaryCount = 0;
     let goalsCount = 0;
     let textbookCount = 0;
 
+    let physicsCount = 0;
+    let philosophyCount = 0;
+    let codeCount = 0;
+    let auxCount = 0;
+
     thoughts.forEach(t => {
       if (t.isTextbook) textbookCount++;
       else if (t.type === 'diary') diaryCount++;
       else if (t.type === 'goal') goalsCount++;
       else notesCount++;
+
+      const topic = getPrimaryTopic(t);
+      if (topic === 'physics') physicsCount++;
+      else if (topic === 'philosophy') philosophyCount++;
+      else if (topic === 'code') codeCount++;
+      else auxCount++;
     });
 
     const total = thoughts.length;
@@ -251,11 +273,19 @@ export const Universe3D: React.FC<Universe3DProps> = ({
       diary: diaryCount / total,
       goals: goalsCount / total,
       textbook: textbookCount / total,
+      physics: physicsCount / total,
+      philosophy: philosophyCount / total,
+      code: codeCount / total,
+      aux: auxCount / total,
       total,
       notesCount,
       diaryCount,
       goalsCount,
       textbookCount,
+      physicsCount,
+      philosophyCount,
+      codeCount,
+      auxCount,
     };
   }, [thoughts]);
 
@@ -271,6 +301,11 @@ export const Universe3D: React.FC<Universe3DProps> = ({
     if (typeFilter === 'textbook') return processedThoughts.filter(t => t.isTextbook);
     return processedThoughts.filter(t => t.type === typeFilter);
   }, [processedThoughts, typeFilter]);
+
+  // Dynamic semantic connection edges based on real-time similarity sensitivity slider
+  const semanticEdges = useMemo(() => {
+    return calculateEdges(filteredThoughts, similarityThreshold);
+  }, [filteredThoughts, similarityThreshold]);
 
   // Matching thoughts for spotlight beacons (scored by keyword and semantic embedding similarity)
   const searchResults = useMemo(() => {
@@ -697,6 +732,11 @@ export const Universe3D: React.FC<Universe3DProps> = ({
     scene.add(beaconsGroup);
     beaconsGroupRef.current = beaconsGroup;
 
+    // Animated Particle Trails System along semantic similarity edges
+    const trailsSystem = new ParticleTrailsSystem();
+    scene.add(trailsSystem.group);
+    particleTrailsRef.current = trailsSystem;
+
     // Raycasting for node hover and click
     const raycaster = new THREE.Raycaster();
     const mouse = new THREE.Vector2();
@@ -874,6 +914,18 @@ export const Universe3D: React.FC<Universe3DProps> = ({
         beacon.update(elapsedTime, delta);
       });
 
+      // Update animated particle trails along semantic edges
+      if (particleTrailsRef.current) {
+        const thoughtsMap = new Map(planetsMeshListRef.current.map(p => [p.id, p]));
+        particleTrailsRef.current.update(
+          delta,
+          elapsedTime,
+          thoughtsMap,
+          matchingThoughtIds.size > 0,
+          matchingThoughtIds
+        );
+      }
+
       // Update crisp HTML Planet Labels in screen-space with distance scaling & Neural Core occlusion fading
       const labelsContainer = labelsContainerRef.current;
       if (labelsContainer && camera) {
@@ -969,6 +1021,12 @@ export const Universe3D: React.FC<Universe3DProps> = ({
       activeBeaconsRef.current.forEach(b => b.dispose());
       activeBeaconsRef.current = [];
 
+      // Clean up particle trails
+      if (particleTrailsRef.current) {
+        particleTrailsRef.current.dispose();
+        particleTrailsRef.current = null;
+      }
+
       // Clean up labels
       if (labelsContainerRef.current) {
         labelsContainerRef.current.innerHTML = '';
@@ -1002,27 +1060,28 @@ export const Universe3D: React.FC<Universe3DProps> = ({
     if (!centralStarMeshRef.current) return;
     const { core, corona, light } = centralStarMeshRef.current;
 
-    // Update GLSL uniform category ratios
+    // Update GLSL uniform category ratios across Physics (Gold), Philosophy (Teal), and Code (Electric Violet)
     const coreMat = core.material as THREE.ShaderMaterial;
     if (coreMat.uniforms?.uCategoryRatios) {
       coreMat.uniforms.uCategoryRatios.value.set(
-        categoryRatios.notes,
-        categoryRatios.diary,
-        categoryRatios.goals,
-        categoryRatios.textbook
+        Math.max(0.005, categoryRatios.physics),
+        Math.max(0.005, categoryRatios.philosophy),
+        Math.max(0.005, categoryRatios.code),
+        Math.max(0.005, categoryRatios.aux)
       );
     }
 
-    // Dynamic Corona tint blended from active vault categories
-    const colorNotes = new THREE.Color('#7c3aed');
-    const colorDiary = new THREE.Color('#f59e0b');
-    const colorGoals = new THREE.Color('#06b6d4');
-    const colorTextbook = new THREE.Color('#38bdf8');
+    // Dynamic Corona tint blended from active vault categories:
+    // Physics (Gold: #F59E0B), Philosophy (Teal: #14B8A6), Code (Electric Violet: #7C3AED), Aux (#06B6D4)
+    const colorPhysics = new THREE.Color('#F59E0B');
+    const colorPhilosophy = new THREE.Color('#14B8A6');
+    const colorCode = new THREE.Color('#7C3AED');
+    const colorAux = new THREE.Color('#06B6D4');
 
     const blendedColor = new THREE.Color(
-      colorNotes.r * categoryRatios.notes + colorDiary.r * categoryRatios.diary + colorGoals.r * categoryRatios.goals + colorTextbook.r * categoryRatios.textbook,
-      colorNotes.g * categoryRatios.notes + colorDiary.g * categoryRatios.diary + colorGoals.g * categoryRatios.goals + colorTextbook.g * categoryRatios.textbook,
-      colorNotes.b * categoryRatios.notes + colorDiary.b * categoryRatios.diary + colorGoals.b * categoryRatios.goals + colorTextbook.b * categoryRatios.textbook
+      colorPhysics.r * categoryRatios.physics + colorPhilosophy.r * categoryRatios.philosophy + colorCode.r * categoryRatios.code + colorAux.r * categoryRatios.aux,
+      colorPhysics.g * categoryRatios.physics + colorPhilosophy.g * categoryRatios.philosophy + colorCode.g * categoryRatios.code + colorAux.g * categoryRatios.aux,
+      colorPhysics.b * categoryRatios.physics + colorPhilosophy.b * categoryRatios.philosophy + colorCode.b * categoryRatios.code + colorAux.b * categoryRatios.aux
     );
 
     const coronaMat = corona.material as THREE.ShaderMaterial;
@@ -1308,6 +1367,13 @@ export const Universe3D: React.FC<Universe3DProps> = ({
     });
   }, [matchingThoughtIds, thoughts]);
 
+  // Synchronize dynamic animated particle trails whenever semantic edges or filtered planets change
+  useEffect(() => {
+    if (!particleTrailsRef.current) return;
+    const thoughtsMap = new Map(planetsMeshListRef.current.map(p => [p.id, p]));
+    particleTrailsRef.current.updateEdges(semanticEdges, thoughtsMap);
+  }, [semanticEdges, filteredThoughts]);
+
   return (
     <div
       ref={universeContainerRef}
@@ -1454,9 +1520,10 @@ export const Universe3D: React.FC<Universe3DProps> = ({
       <div className="absolute top-4 right-4 z-10 flex items-center gap-2 pointer-events-auto">
         <button
           id="camera-reset-btn"
+          data-testid="reset-camera-btn"
           onClick={resetCamera}
           title="Reset Camera Overview"
-          className="p-2.5 astral-card-white hover:bg-gray-100 border-2 border-[#7c3aed] rounded-xl text-[#090a0f] transition-all shadow-lg flex items-center gap-1.5 text-xs font-['Syncopate',sans-serif] font-bold tracking-wider"
+          className="p-2.5 astral-card-white hover:bg-gray-100 border-2 border-[#7c3aed] rounded-xl text-[#090a0f] transition-all shadow-lg flex items-center gap-1.5 text-xs font-['Syncopate',sans-serif] font-bold tracking-wider cursor-pointer"
         >
           <RotateCcw className="w-4 h-4 text-[#7c3aed]" />
           <span className="hidden sm:inline">Reset</span>
@@ -1576,6 +1643,36 @@ export const Universe3D: React.FC<Universe3DProps> = ({
             <span>Cosmic (3.0x)</span>
           </div>
 
+          {/* Real-time Similarity Sensitivity Slider (0.30 - 0.90) to filter connection density */}
+          <div className="mt-3 pt-2.5 border-t border-[#7c3aed]/20">
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center gap-1.5 text-xs font-['Syncopate',sans-serif] font-bold text-[#090a0f] tracking-[0.12em]">
+                <Sparkles className="w-3.5 h-3.5 text-[#7c3aed]" />
+                <span>Similarity Trails</span>
+              </div>
+              <span className="text-xs font-mono text-white font-bold px-2 py-0.5 rounded bg-[#090a0f] border border-[#7c3aed] shadow-sm">
+                {similarityThreshold.toFixed(2)} ({semanticEdges.length} trails)
+              </span>
+            </div>
+
+            <input
+              id="similarity-sensitivity-slider"
+              data-testid="similarity-sensitivity-slider"
+              type="range"
+              min="0.30"
+              max="0.90"
+              step="0.05"
+              value={similarityThreshold}
+              onChange={e => setSimilarityThreshold(parseFloat(e.target.value))}
+              className="astral-slider-purple my-1.5 w-full cursor-pointer"
+            />
+
+            <div className="flex justify-between text-[9px] text-[#090a0f]/75 mt-0.5 font-['Syncopate',sans-serif] tracking-wider">
+              <span>Dense (0.30)</span>
+              <span>Selective (0.90)</span>
+            </div>
+          </div>
+
           {/* Dynamic Neural Core Thought-Gradient Breakdown */}
           <div className="mt-3 pt-2.5 border-t border-[#7c3aed]/20">
             <div className="flex items-center justify-between text-xs font-['Syncopate',sans-serif] font-bold text-[#090a0f] mb-1.5">
@@ -1586,30 +1683,30 @@ export const Universe3D: React.FC<Universe3DProps> = ({
               <span className="text-[10px] text-[#7c3aed] font-mono font-bold">40% Glow</span>
             </div>
 
-            {/* Visual Color Distribution Bar */}
+            {/* Visual Color Distribution Bar (Physics: Gold, Philosophy: Teal, Code: Violet, Aux: Cyan) */}
             <div className="h-2 w-full rounded-full overflow-hidden flex bg-gray-200 my-1 border border-gray-300">
-              <div style={{ width: `${categoryRatios.notes * 100}%` }} className="bg-[#a855f7] h-full" title={`Notes: ${Math.round(categoryRatios.notes * 100)}%`} />
-              <div style={{ width: `${categoryRatios.diary * 100}%` }} className="bg-[#f59e0b] h-full" title={`Diary: ${Math.round(categoryRatios.diary * 100)}%`} />
-              <div style={{ width: `${categoryRatios.goals * 100}%` }} className="bg-[#06b6d4] h-full" title={`Goals: ${Math.round(categoryRatios.goals * 100)}%`} />
-              <div style={{ width: `${categoryRatios.textbook * 100}%` }} className="bg-[#38bdf8] h-full" title={`Books: ${Math.round(categoryRatios.textbook * 100)}%`} />
+              <div style={{ width: `${categoryRatios.physics * 100}%` }} className="bg-[#f59e0b] h-full" title={`Physics: ${Math.round(categoryRatios.physics * 100)}%`} />
+              <div style={{ width: `${categoryRatios.philosophy * 100}%` }} className="bg-[#14b8a6] h-full" title={`Philosophy: ${Math.round(categoryRatios.philosophy * 100)}%`} />
+              <div style={{ width: `${categoryRatios.code * 100}%` }} className="bg-[#a855f7] h-full" title={`Code/AI: ${Math.round(categoryRatios.code * 100)}%`} />
+              <div style={{ width: `${categoryRatios.aux * 100}%` }} className="bg-[#06b6d4] h-full" title={`Aux/Other: ${Math.round(categoryRatios.aux * 100)}%`} />
             </div>
 
             <div className="grid grid-cols-2 gap-1.5 mt-2 text-[10px] font-mono text-[#090a0f]/80">
               <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[#a855f7]" />
-                <span>Notes: {Math.round(categoryRatios.notes * 100)}%</span>
+                <span className="w-2 h-2 rounded-full bg-[#f59e0b]" />
+                <span>Physics: {Math.round(categoryRatios.physics * 100)}%</span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[#f59e0b]" />
-                <span>Diary: {Math.round(categoryRatios.diary * 100)}%</span>
+                <span className="w-2 h-2 rounded-full bg-[#14b8a6]" />
+                <span>Philosophy: {Math.round(categoryRatios.philosophy * 100)}%</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-[#a855f7]" />
+                <span>Code/AI: {Math.round(categoryRatios.code * 100)}%</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-[#06b6d4]" />
-                <span>Goals: {Math.round(categoryRatios.goals * 100)}%</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-[#38bdf8]" />
-                <span>Books: {Math.round(categoryRatios.textbook * 100)}%</span>
+                <span>Aux/Other: {Math.round(categoryRatios.aux * 100)}%</span>
               </div>
             </div>
           </div>

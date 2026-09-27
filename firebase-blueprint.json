@@ -1,0 +1,51 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile and account settings",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "createdAt"]
+    },
+    "ThoughtNode": {
+      "title": "ThoughtNode",
+      "description": "Personal knowledge notes, diary entries, and goals represented as celestial planetary nodes",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "type": { "type": "string", "enum": ["note", "diary", "goal"] },
+        "content": { "type": "string" },
+        "folder": { "type": "string" },
+        "filePath": { "type": "string" },
+        "mood": { "type": "string" },
+        "targetDate": { "type": "string" },
+        "goalStatus": { "type": "string", "enum": ["pending", "in-progress", "completed"] },
+        "goalPriority": { "type": "string", "enum": ["low", "medium", "high"] },
+        "progress": { "type": "number" },
+        "isTextbook": { "type": "boolean" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "title", "type", "createdAt", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Private user account profile"
+    },
+    "/users/{userId}/thoughts/{thoughtId}": {
+      "schema": "ThoughtNode",
+      "description": "User-scoped personal thoughts, notes, diary logs, and goals in the mind map"
+    }
+  }
+}

@@ -7,7 +7,21 @@ import { DiaryWorkspace } from './components/DiaryWorkspace';
 import { GoalsWorkspace } from './components/GoalsWorkspace';
 import { TopBar } from './components/TopBar';
 import { SearchPalette } from './components/SearchPalette';
+import { NewNodeModal } from './components/NewNodeModal';
 import { QuickThoughtModal } from './components/QuickThoughtModal';
+import { SparkGeminiModal } from './components/SparkGeminiModal';
+import {
+  auth,
+  testFirestoreConnection,
+  ensureAnonymousAuth,
+  saveThoughtToFirestore,
+  deleteThoughtFromFirestore,
+  onAuthStateChanged,
+  signInWithPopup,
+  googleProvider,
+  signOut,
+} from './services/firebase';
+import type { User } from 'firebase/auth';
 
 export default function App() {
   const [thoughts, setThoughts] = useState<ThoughtNode[]>([]);
@@ -15,6 +29,10 @@ export default function App() {
   const [vaultPath, setVaultPath] = useState<string>('/vault');
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isDiskSynced, setIsDiskSynced] = useState<boolean>(true);
+
+  // Firebase auth & cloud sync state
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isFirebaseSyncing, setIsFirebaseSyncing] = useState<boolean>(false);
 
   // Navigation & Workspace state
   const [currentTab, setCurrentTab] = useState<WorkspaceTab>('universe');
@@ -25,6 +43,7 @@ export default function App() {
   // Modals
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [isQuickThoughtOpen, setIsQuickThoughtOpen] = useState<boolean>(false);
+  const [isSparkOpen, setIsSparkOpen] = useState<boolean>(false);
   const [connectedLocalVaultName, setConnectedLocalVaultName] = useState<string | null>(null);
 
   // Fetch thoughts and files from disk vault
@@ -52,6 +71,19 @@ export default function App() {
     fetchVault();
   }, [fetchVault]);
 
+  // Initialize Firebase Firestore connection & Auth listener
+  useEffect(() => {
+    testFirestoreConnection().catch(console.warn);
+
+    const unsubscribe = onAuthStateChanged(auth, user => {
+      setCurrentUser(user);
+    });
+
+    ensureAnonymousAuth().catch(console.warn);
+
+    return () => unsubscribe();
+  }, []);
+
   // Global Keyboard shortcuts: Cmd+K (Search), Cmd+N (Quick Note)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -67,7 +99,7 @@ export default function App() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // Save thought to disk
+  // Save thought to disk & Firestore cloud
   const handleSaveThought = async (thoughtData: Partial<ThoughtNode>): Promise<ThoughtNode | null> => {
     try {
       const res = await fetch('/api/vault/save', {
@@ -99,6 +131,14 @@ export default function App() {
         return layoutNodesIn3D(updated);
       });
 
+      // Synchronize to Firebase Firestore cloud database
+      const uid = auth.currentUser?.uid || currentUser?.uid;
+      if (uid && saved) {
+        saveThoughtToFirestore(uid, saved).catch(err => {
+          console.warn('[Firebase] Firestore auto-sync note:', err);
+        });
+      }
+
       return saved;
     } catch (err) {
       console.error('Error saving note:', err);
@@ -106,9 +146,10 @@ export default function App() {
     }
   };
 
-  // Delete thought from disk
+  // Delete thought from disk & Firestore cloud
   const handleDeleteThought = async (filePath: string): Promise<boolean> => {
     try {
+      const targetThought = thoughts.find(t => t.filePath === filePath);
       const res = await fetch('/api/vault/delete', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
@@ -120,10 +161,57 @@ export default function App() {
         const updated = prev.filter(t => t.filePath !== filePath);
         return layoutNodesIn3D(updated);
       });
+
+      // Delete from Firebase Firestore cloud
+      const uid = auth.currentUser?.uid || currentUser?.uid;
+      if (uid && targetThought) {
+        deleteThoughtFromFirestore(uid, targetThought.id).catch(console.warn);
+      }
+
       return true;
     } catch (err) {
       console.error('Error deleting note:', err);
       return false;
+    }
+  };
+
+  // Cloud backup & restore handlers
+  const handleSyncAllToFirebase = async () => {
+    let uid = auth.currentUser?.uid || currentUser?.uid;
+    if (!uid) {
+      const user = await ensureAnonymousAuth();
+      uid = user?.uid;
+    }
+    if (!uid) return;
+
+    try {
+      setIsFirebaseSyncing(true);
+      for (const thought of thoughts) {
+        await saveThoughtToFirestore(uid, thought);
+      }
+      alert(`Backed up ${thoughts.length} planetary thoughts to Firebase Firestore cloud database!`);
+    } catch (err) {
+      console.error('Firebase sync error:', err);
+      alert('Failed to complete Firestore backup.');
+    } finally {
+      setIsFirebaseSyncing(false);
+    }
+  };
+
+  const handleSignInGoogle = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (err: any) {
+      console.warn('Google sign-in:', err?.message);
+    }
+  };
+
+  const handleSignOutFirebase = async () => {
+    try {
+      await signOut(auth);
+      await ensureAnonymousAuth();
+    } catch (err) {
+      console.warn('Sign out:', err);
     }
   };
 
@@ -214,12 +302,18 @@ export default function App() {
         }}
         onOpenSearch={() => setIsSearchOpen(true)}
         onOpenQuickNew={() => setIsQuickThoughtOpen(true)}
+        onOpenSpark={() => setIsSparkOpen(true)}
         thoughts={thoughts}
         vaultPath={vaultPath}
         isDiskSynced={isDiskSynced}
         onExportZip={handleExportZip}
         onConnectLocalDirectory={handleConnectLocalDirectory}
         connectedLocalVaultName={connectedLocalVaultName}
+        firebaseUser={currentUser}
+        isFirebaseSyncing={isFirebaseSyncing}
+        onSyncAllToFirebase={handleSyncAllToFirebase}
+        onSignInGoogle={handleSignInGoogle}
+        onSignOutFirebase={handleSignOutFirebase}
       />
 
       {/* Main Workspace Content Area */}
@@ -292,11 +386,19 @@ export default function App() {
         onSelectThought={handleSelectFromSearch}
       />
 
-      {/* Quick Thought Creation Modal */}
-      <QuickThoughtModal
+      {/* Interactive New Node Modal */}
+      <NewNodeModal
         isOpen={isQuickThoughtOpen}
         onClose={() => setIsQuickThoughtOpen(false)}
         onSave={handleSaveQuickThought}
+      />
+
+      {/* Mind Map Spark (Gemini AI) Modal */}
+      <SparkGeminiModal
+        isOpen={isSparkOpen}
+        onClose={() => setIsSparkOpen(false)}
+        onSaveThought={handleSaveQuickThought}
+        contextThought={thoughts.find(t => t.id === activeThoughtId) || null}
       />
     </div>
   );

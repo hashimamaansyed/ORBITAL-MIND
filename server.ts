@@ -4,6 +4,10 @@ import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 import JSZip from 'jszip';
 import { PDFParse } from 'pdf-parse';
+import dotenv from 'dotenv';
+import { GoogleGenAI } from '@google/genai';
+
+dotenv.config();
 
 const app = express();
 const PORT = 3000;
@@ -1095,6 +1099,110 @@ app.post('/api/vault/seed-sample-textbook', async (req, res) => {
   } catch (err: any) {
     console.error('Error seeding sample textbook:', err);
     res.status(500).json({ error: err.message });
+  }
+});
+
+// Gemini AI Spark endpoint for Mind Map brainstorming and planetary thought synthesis
+app.post('/api/gemini/spark', async (req, res) => {
+  try {
+    const { prompt, mode = 'idea', category = 'auto', contextNode } = req.body;
+    const apiKey = process.env.GEMINI_API_KEY;
+
+    let responsePayload: any = null;
+
+    if (apiKey) {
+      try {
+        const ai = new GoogleGenAI({});
+        const systemPrompt = `You are the creative mind behind "Mind Map & Knowledge Universe".
+Your job is to synthesize celestial, profound, or actionable thoughts, journal entries, or goals for an Obsidian-compatible personal knowledge vault.
+Respond ONLY with valid JSON (no markdown formatting, no code fences):
+{
+  "title": "Short punchy title (max 6 words)",
+  "category": "note" | "diary" | "goal",
+  "tags": ["tag1", "tag2", "tag3"],
+  "content": "Rich markdown body with sections, concepts, and [[Wikilinks]] to potential connected concepts.",
+  "branches": [
+    {
+      "title": "Sub-concept or connected thought title",
+      "category": "note" | "diary" | "goal",
+      "tags": ["tag1", "tag2"],
+      "content": "Brief 1-2 paragraph description with [[Wikilinks]]."
+    },
+    {
+      "title": "Second connected thought",
+      "category": "note" | "diary" | "goal",
+      "tags": ["tag1", "tag2"],
+      "content": "Brief 1-2 paragraph description with [[Wikilinks]]."
+    }
+  ]
+}`;
+
+        const userPrompt = `Mode: ${mode}
+Requested Category: ${category}
+User Query/Topic: ${prompt || 'A profound cosmic insight connecting mind, universe, and technology'}
+${contextNode ? `Context Node: Title="${contextNode.title}", Tags=${JSON.stringify(contextNode.tags)}, Content="${(contextNode.content || '').slice(0, 500)}"` : ''}`;
+
+        const result = await ai.models.generateContent({
+          model: 'gemini-3.8-flash',
+          contents: userPrompt,
+          config: {
+            systemInstruction: systemPrompt,
+            responseMimeType: 'application/json',
+            temperature: 0.8,
+          }
+        });
+
+        const rawText = result.text || '';
+        try {
+          responsePayload = JSON.parse(rawText.trim());
+        } catch (jsonErr) {
+          const cleaned = rawText.replace(/```json\n?|```/g, '').trim();
+          responsePayload = JSON.parse(cleaned);
+        }
+      } catch (geminiErr: any) {
+        console.warn('Gemini API call error, falling back to algorithmic synthesis:', geminiErr?.message);
+      }
+    }
+
+    // Fallback if Gemini API not configured or error occurred
+    if (!responsePayload) {
+      const topic = (prompt || 'Cosmic Cognition & Emergent Knowledge').trim();
+      const detectedCat = category === 'diary' ? 'diary' : (category === 'goal' ? 'goal' : 'note');
+      const isGoal = detectedCat === 'goal';
+      const isDiary = detectedCat === 'diary';
+
+      responsePayload = {
+        title: topic.slice(0, 40),
+        category: detectedCat,
+        tags: isGoal ? ['goals', 'milestone', 'focus'] : isDiary ? ['diary', 'reflection', 'clarity'] : ['physics', 'mind', 'ai'],
+        content: `# ${topic}\n\n${
+          isDiary
+            ? `## Morning Reflection\nToday my attention centers on ${topic}. By cultivating presence and clarity, thoughts coalesce into orbit.\n\n- Key intention: Maintain focus amidst cognitive noise.\n- Cross-link: Connecting with [[Neural-Architecture-Cognitive-Topologies]].`
+            : isGoal
+            ? `## Objective Roadmap\nDefine the foundational architecture to achieve ${topic}.\n\n### Milestones\n1. [ ] Map out core deliverables and telemetry.\n2. [ ] Review convergence with existing [[Goals]].\n3. [ ] Finalize implementation review.`
+            : `## Synthesized Concept\nExploration of ${topic} across interconnected semantic manifolds.\n\nWhen viewed through relational geometry, concepts cluster naturally like planets around a central gravitational star. Intersects with [[Quantum-Entanglement-Superposition]] and [[Stoic-Virtue-Epictetus-Control]].`
+        }`,
+        branches: [
+          {
+            title: `${topic}: Foundations`,
+            category: detectedCat,
+            tags: ['foundations', 'concepts'],
+            content: `Core axiomatic principles supporting [[${topic.replace(/ /g, '-')}]] in the knowledge graph.`
+          },
+          {
+            title: `${topic}: Future Horizons`,
+            category: detectedCat,
+            tags: ['exploration', 'future'],
+            content: `Extending [[${topic.replace(/ /g, '-')}]] into adjacent celestial clusters.`
+          }
+        ]
+      };
+    }
+
+    res.json({ success: true, spark: responsePayload });
+  } catch (err: any) {
+    console.error('Error generating spark:', err);
+    res.status(500).json({ error: err.message || 'Failed to generate spark' });
   }
 });
 
